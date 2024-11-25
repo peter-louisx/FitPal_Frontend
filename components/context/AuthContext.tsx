@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [caloriesToday, setCaloriesToday] = useState<number | null>(null);
   const [targetCalories, setTargetCalories] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const fetchUserData = async (user: User) => {
@@ -79,7 +79,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    setLoading(true);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
