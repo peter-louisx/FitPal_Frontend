@@ -50,7 +50,7 @@ export default function Calculator() {
 
   const [calories, setCalories] = useState<number | null>(null);
   const [loadingInitForm, setLoadingInitForm] = useState<boolean>(true);
-  const { user } = useContext(AuthContext);
+  const { user, fetchUserData } = useContext(AuthContext);
   const { toast } = useToast();
 
   const activityLevels = [
@@ -150,6 +150,8 @@ export default function Calculator() {
           title: "Success",
           description: "Profile saved successfully",
         });
+
+        if (user) fetchUserData(user);
       });
     } catch (e) {
       toast({
