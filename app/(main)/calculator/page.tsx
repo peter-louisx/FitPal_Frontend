@@ -152,7 +152,11 @@ export default function Calculator() {
         });
       });
     } catch (e) {
-      console.error("Error adding document: ", e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save profile",
+      });
     }
   };
 

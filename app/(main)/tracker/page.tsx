@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import axios from "@/app/api/axios";
 import {
   Table,
@@ -14,9 +14,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import InputSkeleton from "@/components/ui/input-skeleton";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  addDoc,
+} from "firebase/firestore";
+import { db } from "@/firebase";
 import TableSkeleton from "@/components/ui/table-skeleton";
 import { Button } from "@/components/ui/button";
+import { AuthContext } from "@/components/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TrackerPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -25,6 +35,9 @@ export default function TrackerPage() {
     ingredients: { name: string; calorie: number }[];
     total_calories: number;
   } | null>(null);
+
+  const { user } = useContext(AuthContext);
+  const { toast } = useToast();
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -49,8 +62,6 @@ export default function TrackerPage() {
         .then((response) => {
           setLoadingImageSend(false);
           setCalories(response.data);
-          console.log(response.data);
-          //Check if response type is an array
           if (Array.isArray(response.data)) {
             setCalories(response.data[0]);
           } else {
@@ -66,6 +77,31 @@ export default function TrackerPage() {
           console.error(error);
         });
     }
+  };
+
+  const saveCalories = async () => {
+    // Save calories to the database
+    await addDoc(
+      collection(db, "user_calories", user?.uid ?? "", "user_intakes"),
+      {
+        calories,
+        date: new Date(),
+      }
+    )
+      .then(() => {
+        toast({
+          variant: "default",
+          title: "Success",
+          description: "Calories saved successfully",
+        });
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to save calories",
+        });
+      });
   };
 
   return (
@@ -129,7 +165,13 @@ export default function TrackerPage() {
                 )}
 
                 <div>
-                  <Button>Save Calories</Button>
+                  <Button
+                    onClick={() => {
+                      saveCalories();
+                    }}
+                  >
+                    Save Calories
+                  </Button>
                 </div>
               </div>
             )}
