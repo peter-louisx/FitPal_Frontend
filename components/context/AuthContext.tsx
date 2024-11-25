@@ -4,7 +4,15 @@ import React, { createContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "@/firebase";
 
 interface AuthContextType {
@@ -13,6 +21,7 @@ interface AuthContextType {
   checkAuth: () => boolean;
   targetCalories: number | null;
   caloriesToday: number | null;
+  fetchUserData: (user: User) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -21,6 +30,7 @@ export const AuthContext = createContext<AuthContextType>({
   checkAuth: () => false,
   targetCalories: null,
   caloriesToday: null,
+  fetchUserData: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -31,17 +41,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   const fetchUserData = async (user: User) => {
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1
+    );
+    const startTimestamp = Timestamp.fromDate(startOfDay);
+    const endTimestamp = Timestamp.fromDate(endOfDay);
+
     await getDoc(doc(db, "user_calories", user?.uid ?? "")).then((doc) => {
       if (doc.exists()) {
-        console.log(doc.data());
-        setTargetCalories(doc.data().target_calories);
+        setTargetCalories(doc.data().calories);
       } else {
         setTargetCalories(null);
       }
     });
 
     await getDocs(
-      collection(db, "user_calories", user?.uid ?? "", "user_intakes")
+      query(
+        collection(db, "user_calories", user?.uid ?? "", "user_intakes"),
+        where("date", ">=", startTimestamp),
+        where("date", "<", endTimestamp)
+      )
     ).then((querySnapshot) => {
       let totalCalories = 0;
       querySnapshot.forEach((doc) => {
@@ -78,7 +105,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, checkAuth, loading, targetCalories, caloriesToday }}
+      value={{
+        user,
+        checkAuth,
+        loading,
+        targetCalories,
+        caloriesToday,
+        fetchUserData,
+      }}
     >
       {children}
     </AuthContext.Provider>

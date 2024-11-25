@@ -36,7 +36,7 @@ export default function TrackerPage() {
     total_calories: number;
   } | null>(null);
 
-  const { user } = useContext(AuthContext);
+  const { user, fetchUserData } = useContext(AuthContext);
   const { toast } = useToast();
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +80,6 @@ export default function TrackerPage() {
   };
 
   const saveCalories = async () => {
-    // Save calories to the database
     await addDoc(
       collection(db, "user_calories", user?.uid ?? "", "user_intakes"),
       {
@@ -94,6 +93,8 @@ export default function TrackerPage() {
           title: "Success",
           description: "Calories saved successfully",
         });
+
+        if (user) fetchUserData(user);
       })
       .catch((error) => {
         toast({
