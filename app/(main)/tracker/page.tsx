@@ -27,8 +27,19 @@ import TableSkeleton from "@/components/ui/table-skeleton";
 import { Button } from "@/components/ui/button";
 import { AuthContext } from "@/components/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { set } from "react-hook-form";
 
 export default function TrackerPage() {
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loadingImageSend, setLoadingImageSend] = useState<boolean>(false);
   const [calories, setCalories] = useState<{
@@ -36,7 +47,8 @@ export default function TrackerPage() {
     total_calories: number;
   } | null>(null);
 
-  const { user, fetchUserData } = useContext(AuthContext);
+  const { user, fetchUserData, caloriesToday, targetCalories } =
+    useContext(AuthContext);
   const { toast } = useToast();
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,7 +147,7 @@ export default function TrackerPage() {
           <TableSkeleton />
         ) : (
           <>
-            {calories && (
+            {calories && caloriesToday && targetCalories && (
               <div className="w-full">
                 {calories && (
                   <div>
@@ -165,15 +177,48 @@ export default function TrackerPage() {
                   </div>
                 )}
 
-                <div>
-                  <Button
-                    onClick={() => {
-                      saveCalories();
-                    }}
-                  >
-                    Save Calories
-                  </Button>
-                </div>
+                {calories.total_calories + caloriesToday <= targetCalories && (
+                  <div>
+                    <Button
+                      onClick={() => {
+                        saveCalories();
+                      }}
+                    >
+                      Save Calories
+                    </Button>
+                  </div>
+                )}
+
+                {calories.total_calories + caloriesToday > targetCalories && (
+                  <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline"> Save Calories</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Warning</DialogTitle>
+                        <DialogDescription>
+                          You are about to save more calories than your daily
+                          target by{" "}
+                          {calories.total_calories +
+                            caloriesToday -
+                            targetCalories}{" "}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            saveCalories();
+                            setOpenDialog(false);
+                          }}
+                        >
+                          Save Anyway
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
             )}
           </>
