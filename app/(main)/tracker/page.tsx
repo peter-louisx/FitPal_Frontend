@@ -47,7 +47,7 @@ export default function TrackerPage() {
     total_calories: number;
   } | null>(null);
 
-  const { user, fetchUserData, caloriesToday, targetCalories } =
+  const { user, fetchUserData, caloriesToday, targetCalories, loading } =
     useContext(AuthContext);
   const { toast } = useToast();
 
@@ -75,6 +75,7 @@ export default function TrackerPage() {
           setLoadingImageSend(false);
           setCalories(response.data);
           if (Array.isArray(response.data)) {
+            console.log(response.data[0]);
             setCalories(response.data[0]);
           } else {
             if (response.data.Calories) {
@@ -147,8 +148,8 @@ export default function TrackerPage() {
           <TableSkeleton />
         ) : (
           <>
-            {calories && caloriesToday && targetCalories && (
-              <div className="w-full">
+            {calories && (
+              <div className="w-full py-4">
                 {calories && (
                   <div>
                     <Table>
@@ -177,7 +178,8 @@ export default function TrackerPage() {
                   </div>
                 )}
 
-                {calories.total_calories + caloriesToday <= targetCalories && (
+                {calories.total_calories + (caloriesToday ?? 0) <=
+                  (targetCalories ?? 0) && (
                   <div>
                     <Button
                       onClick={() => {
@@ -189,7 +191,8 @@ export default function TrackerPage() {
                   </div>
                 )}
 
-                {calories.total_calories + caloriesToday > targetCalories && (
+                {calories.total_calories + (caloriesToday ?? 0) >
+                  (targetCalories ?? 0) && (
                   <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                     <DialogTrigger asChild>
                       <Button variant="outline"> Save Calories</Button>
@@ -198,11 +201,11 @@ export default function TrackerPage() {
                       <DialogHeader>
                         <DialogTitle>Warning</DialogTitle>
                         <DialogDescription>
-                          You are about to save more calories than your daily
+                          You are about to exceed more calories than your daily
                           target by{" "}
                           {calories.total_calories +
-                            caloriesToday -
-                            targetCalories}{" "}
+                            (caloriesToday ?? 0) -
+                            (targetCalories ?? 0)}{" "}
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
@@ -224,6 +227,9 @@ export default function TrackerPage() {
           </>
         )}
       </div>
+      {/* <Button onClick={() => console.log(caloriesToday, targetCalories)}>
+        fds
+      </Button> */}
     </div>
   );
 }
