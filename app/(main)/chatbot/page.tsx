@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
+import { useEffect } from "react";
 import { Bot, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +18,54 @@ interface Message {
 
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hello! How can I help you today?" },
+    { role: "assistant", content: "Hello! Cady's here, how can I help you today?" },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [shuffledQuestions, setShuffledQuestions] = useState<string[]>([]);
+
+  const previewQuestions = [
+    "How many calories in double cheeseburger?",
+    "What are some high-protein foods?",
+    "Can you provide a 1500-calorie meal plan?",
+    "What's the best way to maintain a balanced diet?",
+    "Are avocados good for weight loss?",
+    "How many calories in a boiled egg?",
+  ];
+
+  const shuffleAndPick = (arr: string[]) => {
+    return arr.sort(() => Math.random() - 0.5).slice(0, 3);
+  };
+
+  useEffect(() => {
+    setShuffledQuestions(shuffleAndPick(previewQuestions));
+  }, []);
+
+  const handleQuestionClick = async (question: string) => {
+    setMessages((prev) => [...prev, { role: "user", content: question }]);
+    setIsLoading(true);
+  
+    try {
+      const response = await axios.request({
+        url: "/chatbot",
+        method: "POST",
+        data: { message: question },
+      });
+  
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: response.data.message },
+      ]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +160,21 @@ export default function ChatbotPage() {
               )}
             </div>
           </ScrollArea>
+
+          <div className="p-4 bg-gray-100 border-b">
+            <div className="flex flex-wrap gap-2">
+            {shuffledQuestions.map((question, index) => (
+                <Button
+                  key={index}
+                  onClick={() => handleQuestionClick(question)}
+                  className="bg-blue-500 text-white"
+                  disabled={isLoading}
+                >
+                  {question}
+                </Button>
+              ))}
+            </div>
+          </div>
 
           <form
             onSubmit={handleSubmit}
