@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
-
+import { useState, useContext, useEffect } from "react";
+import { AuthContext } from "@/components/context/AuthContext";
+import { Loader2Icon, Check, CircleAlert} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -17,100 +18,168 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+
 } from "@/components/ui/chart";
+
+interface Pie{
+  name :  string,
+  calories : number,
+  fill : string
+}
 
 export function PieChartCalories({
   todayCalories,
   targetCalories,
+  intakes,
+  isLoading ,
+
 }: {
   todayCalories: number;
   targetCalories: number;
-}) {
-  const caloriesChartData = [
-    { calorie: "today", calories: todayCalories, fill: "var(--color-today)" },
-    {
-      calorie: "target",
-      calories: targetCalories,
-      fill: "var(--color-target)",
-    },
-  ];
+  intakes: Pie[];
+  isLoading : boolean;
 
-  const caloriesChartConfig = {
-    calories: {
-      label: "Calories",
+}) {
+
+  const {user} = useContext(AuthContext);
+  const [randomColor, setRandomColor] = useState<string>("");
+  const [chartConfig, setChartConfig] = useState<ChartConfig>({
+    calories:{
+      label: "Calories"
     },
-    today: {
-      label: "Today",
-      color: "hsl(var(--chart-1))",
-    },
-    target: {
-      label: "Target",
-      color: "#f0f0f0",
-    },
-  } satisfies ChartConfig;
+    target:{
+      label: "Remaining Calories",
+    }
+  });
+  
+  // everytime intakes changes, update the chartConfig (the colored labels)
+  useEffect(() => {
+      setChartConfig((prev) => {
+        const newConfig = {...prev};
+        intakes.forEach((intake) => {
+          newConfig[intake.name] = {
+            label: intake.name
+          }
+        })
+        return newConfig;
+      })
+    
+  }, [intakes])
+  
+
+  // const caloriesChartConfig = {
+  //   calories: {
+  //     label: "Calories",
+  //   },
+  //   target: {
+  //     label: "Calories Left",
+  //     color: "f0f0f0",
+  //   },
+  // } satisfies ChartConfig;
 
   return (
     <Card className="flex flex-col flex-1">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Toal calories eaten today</CardTitle>
+      {!isLoading && <CardTitle>Total calories consumed today</CardTitle>}
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={caloriesChartConfig}
-          className="mx-auto aspect-square max-h-[320px]"
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={caloriesChartData}
-              dataKey="calories"
-              nameKey="calorie"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
+
+      {isLoading ?
+       <CardContent className="flex flex-col flex-1 pb-0 items-center justify-center">
+         <Loader2Icon color={"hsl(var(--chart-1))"} size={75} className="animate-spin" />
+         <div className={`text-[hsl(var(--chart-1))]`}>Loading...</div>
+      </CardContent>
+      :
+      <CardContent className="flex-1 flex flex-shrink-0 items-center">
+      <ChartContainer
+        config={chartConfig}
+        className="mx-auto aspect-square max-h-[350px] w-10/12 "
+      >
+        <PieChart>
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <Pie
+            data={
+              todayCalories < targetCalories ?
+              [...intakes, {
+                  name: "target",
+                  calories: todayCalories >= targetCalories ? 0 : targetCalories - todayCalories,
+                  fill: "#f0f0f0",
+                }
+              ]
+              : 
+              [...intakes]
+          }
+            dataKey="calories"
+            nameKey="name"
+            innerRadius={65}
+            strokeWidth={5}
+          >
+            <Label
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
+                        className="fill-foreground text-3xl font-bold"
                       >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {todayCalories.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          Calories
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-      </CardContent>
+
+                        {todayCalories.toLocaleString()}
+
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 24}
+                        className="fill-muted-foreground"
+                      >
+                        Calories
+                      </tspan>
+                    </text>
+                  );
+                }
+              }}
+            />
+          </Pie>
+          <ChartLegend
+              content={<ChartLegendContent nameKey="name" />}
+              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center text-black"
+          />
+        </PieChart>
+      </ChartContainer>
+    </CardContent>    
+      }
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
+      {!isLoading && 
+        <>
+          <div className="flex items-center gap-1.5 font-medium leading-none justify-center align-center">
+          {todayCalories > targetCalories ? 
+          <>
+             <div>You have exceeded your daily calorie intake</div>
+             <CircleAlert className="h-4  w-4" />
+          </>
+           : 
+          <>
+            <div>You're still within your daily calorie limit</div>
+            <Check className="h-4  w-4" />
+          </>
+          }
+          </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Showing total calories consumed today
         </div>
+        </>
+      }
+
       </CardFooter>
     </Card>
   );

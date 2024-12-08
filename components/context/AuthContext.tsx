@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         targetCalories,
         caloriesToday,
-        fetchUserData,
+        fetchUserData
       }}
     >
       {children}
