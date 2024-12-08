@@ -51,7 +51,7 @@ const convertToDay = (date : Timestamp) => {
   return arr[day];
 }
 
-interface Bar{
+interface bar{
   day :  string,
   calories : number,
 }
@@ -61,8 +61,8 @@ export function BarChartCalories({
 }: {userId? : string}) {
 
   
-  const [intakes, setIntakes] = useState<Bar []>([]);
-  const arrIntakes: Bar[] = [];
+  const [intakes, setIntakes] = useState<bar []>([]);
+  const arrIntakes: bar[] = [];
   const [startTrackedDay, setStartTrackedDay] = useState<string>("");
   const [endTrackedDay, setEndTrackedDay] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);

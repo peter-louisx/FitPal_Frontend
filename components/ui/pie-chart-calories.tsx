@@ -23,7 +23,7 @@ import {
 
 } from "@/components/ui/chart";
 
-interface Pie{
+interface pie{
   name :  string,
   calories : number,
   fill : string
@@ -38,7 +38,7 @@ export function PieChartCalories({
 }: {
   todayCalories: number;
   targetCalories: number;
-  intakes: Pie[];
+  intakes: pie[];
   isLoading : boolean;
 
 }) {
