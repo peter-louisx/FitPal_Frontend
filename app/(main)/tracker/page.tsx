@@ -155,10 +155,9 @@ export default function TrackerPage() {
   },[calories])
 
 
-  useEffect(() => {
-    // console.log("terkirim", calories);
-    console.log(caloriesToday, targetCalories, calories?.total_calories);
-}, [caloriesToday, targetCalories, calories?.total_calories]);
+//   useEffect(() => {
+//     console.log(caloriesToday, targetCalories, calories?.total_calories);
+// }, [caloriesToday, targetCalories, calories?.total_calories]);
 
 
   return (

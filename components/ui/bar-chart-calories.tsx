@@ -62,27 +62,38 @@ export function BarChartCalories({
 
   
   const [intakes, setIntakes] = useState<bar []>([]);
-  const arrIntakes: bar[] = [];
+ 
   const [startTrackedDay, setStartTrackedDay] = useState<string>("");
   const [endTrackedDay, setEndTrackedDay] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [weeklyCalories, setWeeklyCalories] = useState<number>(0);
 
+
   const getWeeklyCalories = async () =>{
+    const arrIntakes: bar[] = [];
     setIsLoading(true);
     await getDocs(query(collection(db, "user_calories", userId ?? "", "user_intakes"),
     where("date", ">=", start),
     where("date", "<=", end)
   ))
     .then((resp) => {
+      setWeeklyCalories(0);
       resp.forEach(element => {
         // console.log("hari: ",element.data().date, "calories: ", element.data().calories.total_calories)
         const index = arrIntakes.findIndex((intake) => intake.day === convertToDay(element.data().date));
+
         // if that food was eaten on that day, add the calories to the existing calories
         if (index !== -1) arrIntakes[index].calories += element.data().calories.total_calories;
-        else arrIntakes.push({day: convertToDay(element.data().date), calories: element.data().calories.total_calories}) 
+
+        else arrIntakes.push({
+          day: convertToDay(element.data().date), 
+          calories: element.data().calories.total_calories
+        }) 
+
         setWeeklyCalories((cal) => cal + element.data().calories.total_calories);
       });
+      
+      
     })
     .finally(() => {
       setIntakes(arrIntakes);
@@ -92,13 +103,17 @@ export function BarChartCalories({
   
   
   useEffect (() => {
-    if (userId) getWeeklyCalories();
+    if (userId) {
+      getWeeklyCalories();
+    }
   }, [userId]);
+
 
   useEffect (() => {
     setStartTrackedDay(intakes[0]?.day);
     setEndTrackedDay(intakes[intakes.length - 1]?.day);
-    // console.log('intakes bar', intakes);
+    // console.log('intakes', intakes);
+    // console.log("weekly cal", weeklyCalories);
     // console.log("start", start);
     // console.log("end", end);
   }, [intakes]);
@@ -131,7 +146,9 @@ export function BarChartCalories({
           </div>
           :
           <ChartContainer config={chartConfig}>
+
           <BarChart accessibilityLayer data={intakes}>
+
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="day"
