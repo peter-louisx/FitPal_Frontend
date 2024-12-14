@@ -140,7 +140,7 @@ export default function TrackerPage() {
 // handle unmatching total calories from gemini
   useEffect(() => {
     let manualTotal = 0;
-    if (calories){
+    if (calories?.ingredients){
       calories?.ingredients.map((ingredient) => {
         manualTotal += Number(ingredient.calorie);
     });
