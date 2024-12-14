@@ -14,7 +14,7 @@ export default function SignOut() {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
-          <div onClick={() => signOut(auth)}>
+          <div onClick={() => signOut(auth)} className="cursor-pointer">
             <LogOut />
             <span>Logout</span>
           </div>
